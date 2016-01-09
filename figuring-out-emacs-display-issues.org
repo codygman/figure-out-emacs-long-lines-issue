@@ -1,4 +1,7 @@
 *  Figuring out emacs display issues
+** Quick workarounds
+*** compilation buffer (I have problems here a lot)
+**** add hook to send output to `fmt -w 90` command
 ** links to bug reports (ordered by importance)
 *** http://debbugs.gnu.org/cgi/bugreport.cgi?bug=13675
 **** Important points of discussion
