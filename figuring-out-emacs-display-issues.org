@@ -1,0 +1,1330 @@
+*  Figuring out emacs display issues
+** links to bug reports (ordered by importance)
+*** http://debbugs.gnu.org/cgi/bugreport.cgi?bug=13675
+**** Important points of discussion
+***** code to generate long lines file from Eli
+#+BEGIN_SRC awk
+BEGIN {
+# 500 lines
+for (i = 1; i <= 500; i++)
+{
+# Line length between 10K and 20K characters + newline
+line_len = 10000 * rand() + 10000;
+for (j = 1; j <= line_len; j++)
+{
+# 15% of punctuation and digit charcaters, the rest letters
+if (rand() < 0.15)
+{
+# Start at SPACE
+lbase = 32;
+llen = 33;
+}
+else
+{
+# Start at 'a'
+lbase = 97;
+llen = 26;
+}
+printf "%c", llen * rand() + lbase;
+}
+printf "\n";
+}
+}
+#+END_SRC
+**** Summary
+***** Eli: Here is awk script to repro slow emacs
+This is a very long-standing deficiency of the Emacs display engine:
+it is awfully slow in buffers with very long (thousands of characters)
+lines.  Specifically, many simple movement commands, scrolling, or
+even typing "M-x" can take several seconds(!) to complete.
+
+A simple Awk script attached below can be used to generate such files.
+
+For the latest discussions of this and some data, see this thread:
+
+http://lists.gnu.org/archive/html/emacs-devel/2013-02/msg00135.html
+
+The solution for this bug should produce algorithmic changes in the
+display engine and possibly also supporting changes in data structures
+that would prevent such a terrible slow-down with long lines.
+Ideally, redisplay of such buffers should not be much slower than
+buffers with "normal" line length.
+
+Here's a script that can be used to produce test files for this bug:
+
+---------------------------------------------
+#+BEGIN_SRC awk
+BEGIN {
+# 500 lines
+for (i = 1; i <= 500; i++)
+{
+# Line length between 10K and 20K characters + newline
+line_len = 10000 * rand() + 10000;
+for (j = 1; j <= line_len; j++)
+{
+# 15% of punctuation and digit charcaters, the rest letters
+if (rand() < 0.15)
+{
+# Start at SPACE
+lbase = 32;
+llen = 33;
+}
+else
+{
+# Start at 'a'
+lbase = 97;
+llen = 26;
+}
+printf "%c", llen * rand() + lbase;
+}
+printf "\n";
+}
+}
+#+END_SRC
+
+---------------------------------------------
+
+
+In GNU Emacs 24.2.93.1 (i386-mingw-nt5.1.2600)
+of 2013-02-07 on HOME-C4E4A596F7
+Windowing system distributor `Microsoft Corp.', version 5.1.2600
+Configured using:
+`configure --with-gcc (3.4) --cflags -Id:/usr/include/libxml2'
+
+Important settings:
+value of $LANG: ENU
+locale-coding-system: cp1255
+default enable-multibyte-characters: t
+
+Major mode: Mail
+
+Minor modes in effect:
+shell-dirtrack-mode: t
+diff-auto-refine-mode: t
+flyspell-mode: t
+desktop-save-mode: t
+show-paren-mode: t
+display-time-mode: t
+tooltip-mode: t
+mouse-wheel-mode: t
+tool-bar-mode: t
+menu-bar-mode: t
+file-name-shadow-mode: t
+global-font-lock-mode: t
+font-lock-mode: t
+blink-cursor-mode: t
+auto-composition-mode: t
+auto-encryption-mode: t
+auto-compression-mode: t
+temp-buffer-resize-mode: t
+line-number-mode: t
+auto-fill-function: mail-mode-auto-fill
+abbrev-mode: t
+
+Recent input:
+e t a i l s . <return> <up> <up> <C-right> <C-right> 
+<C-right> C-x C-e <help-echo> <help-echo> <down> <down> 
+<down> <return> T h e SPC r e a s o n SPC f o r SPC 
+t h e SPC d e f a u l t SPC v a l u e SPC i s SPC t 
+o SPC a v o i d SPC t h e SPC a n n o y i n g SPC j 
+u m p s SPC o f SPC t h e SPC m o d e SPC l i n e <up> 
+<M-right> <C-left> <C-left> <C-left> <left> SPC a <backspace> 
+u p SPC a n d SPC d o w n M-q <down> SPC w h e n SPC 
+t h e SPC e c h o SPC a r e a SPC d i s p l a y s SPC 
+m e s s a g e s SPC o f SPC d i f f e r e n t SPC l 
+e n g t h . <return> <C-home> C-c C-s <help-echo> <switch-frame> 
+d d d d d d d d d SPC d d o P O <tab> <return> d d 
+d d d d d d d d n d SPC d d d SPC <prior> <next> <next> 
+d SPC d d d d d C-z C-z C-z C-z C-z C-z C-z C-z d d 
+d d d d SPC SPC <prior> <next> <next> <next> <next> 
+<next> <next> <next> <next> <next> <next> <next> <next> 
+<next> <next> <next> <next> <next> <next> <next> <next> 
+<next> d <C-home> C-x C-s <switch-frame> <switch-frame> 
+<help-echo> <help-echo> <switch-frame> <switch-frame> 
+<help-echo> <switch-frame> <help-echo> M-x r e p o 
+r t - e m a c s - b u <tab> <return>
+
+Recent messages:
+Sending...
+Added to d:/usr/eli/rmail/SENT.MAIL
+Sending email 
+Sending email done
+Sending...done
+Added to d:/usr/eli/rmail/PORTS.rmail
+No following nondeleted message
+Mark set
+Saving file d:/usr/eli/rmail/INBOX...
+Wrote d:/usr/eli/rmail/INBOX [2 times]
+
+Load-path shadows:
+None found.
+
+Features:
+(shadow emacsbug cc-awk tar-mode etags texinfo mule-util ebuff-menu
+electric bug-reference add-log misearch multi-isearch dabbrev
+time-stamp rmailout network-stream starttls tls mail-extr smtpmail
+auth-source eieio password-cache shell mailalias sendmail help-mode
+tcl nxml-uchnm rng-xsd xsd-regexp rng-cmpct rng-nxml rng-valid rng-loc
+rng-uri rng-parse nxml-parse rng-match rng-dt rng-util rng-pttrn
+nxml-ns nxml-mode nxml-outln nxml-rap nxml-util nxml-glyph nxml-enc
+xmltok sgml-mode conf-mode generic arc-mode archive-mode diff-mode
+dired-x cl-macs gv dired face-remap org-wl org-w3m org-vm org-rmail
+org-mhe org-mew org-irc org-jsinfo org-infojs org-html org-exp ob-exp
+org-exp-blocks org-agenda org-info org-gnus gnus-util org-docview
+org-bibtex bibtex org-bbdb org byte-opt warnings bytecomp byte-compile
+cconv advice help-fns advice-preload ob-tangle ob-ref ob-lob ob-table
+org-footnote org-src ob-comint ob-keys org-pcomplete pcomplete
+org-list org-faces org-entities org-version ob-emacs-lisp ob
+org-compat org-macs ob-eval org-loaddefs find-func cal-menu calendar
+cal-loaddefs parse-time vc-cvs gud comint ansi-color ring sh-script
+smie executable autoconf autoconf-mode make-mode autorevert noutline
+outline easy-mmode jka-compr info vc-bzr cc-langs cl cl-lib cc-mode
+cc-fonts cc-guess cc-menus cc-cmds cc-styles cc-align cc-engine
+cc-vars cc-defs flyspell rmailsum qp rmailmm message format-spec
+rfc822 mml mml-sec mm-decode mm-bodies mm-encode mailabbrev gmm-utils
+mailheader mail-parse rfc2231 rmail rfc2047 rfc2045 ietf-drums mm-util
+mail-prsvr mail-utils desktop server filecache mairix cus-edit
+easymenu cus-start cus-load wid-edit saveplace midnight ispell
+generic-x paren battery time time-date tooltip ediff-hook vc-hooks
+lisp-float-type mwheel dos-w32 ls-lisp w32-common-fns disp-table
+w32-win w32-vars tool-bar dnd fontset image regexp-opt fringe
+tabulated-list newcomment lisp-mode register page menu-bar rfn-eshadow
+timer select scroll-bar mouse jit-lock font-lock syntax facemenu
+font-core frame cham georgian utf-8-lang misc-lang vietnamese tibetan
+thai tai-viet lao korean japanese hebrew greek romanian slovak czech
+european ethiopic indian cyrillic chinese case-table epa-hook
+jka-cmpr-hook help simple abbrev minibuffer loaddefs button faces
+cus-face macroexp files text-properties overlay sha1 md5 base64 format
+env code-pages mule custom widget hashtable-print-readable backquote
+make-network-process w32 multi-tty emacs)
+
+***** Eli: I made some fixes
+> Date: Sun, 10 Feb 2013 18:26:14 +0200
+> From: Eli Zaretskii <eliz <at> gnu.org>
+> 
+> This is a very long-standing deficiency of the Emacs display engine:
+> it is awfully slow in buffers with very long (thousands of characters)
+> lines.  Specifically, many simple movement commands, scrolling, or
+> even typing "M-x" can take several seconds(!) to complete.
+> 
+> A simple Awk script attached below can be used to generate such files.
+> 
+> For the latest discussions of this and some data, see this thread:
+> 
+>   http://lists.gnu.org/archive/html/emacs-devel/2013-02/msg00135.html
+> 
+> The solution for this bug should produce algorithmic changes in the
+> display engine and possibly also supporting changes in data structures
+> that would prevent such a terrible slow-down with long lines.
+> Ideally, redisplay of such buffers should not be much slower than
+> buffers with "normal" line length.
+
+Revision 111724 speeds up some of the redisplay operations by a factor
+of 3.
+*** http://lists.gnu.org/archive/html/emacs-devel/2013-02/msg00135.html (most important)
+**** Important points of discussion
+***** testing redisplay on buffers which are predominantly punctuation will give you unrealistic measurements
+***** How Eli thinks problem should be solved
+The most important reason is the first one: long lines cause
+the display code traverse too much of buffer text.  This is why you
+see x_produce_glyphs so high on the profile in the unidirectional
+case: it examines too many characters, much more than what will be
+actually displayed on the screen.
+***** Redefinition of the core problem
+Further measurements indicate that the bottleneck is in searches for
+previous or next newline, or N-th previous/next newline.  These
+searches are at the core of functions that compute pixel dimensions of
+buffer text, when the display engine needs to figure out where to
+start displaying the window after scrolling, or where to put point
+after C-p or C-n.
+
+As a typical example, a C-n in a buffer with truncate-lines set
+non-nil requires us to find the next physical line in the buffer,
+i.e. the next newline.  We currently do that by searching forward in
+the buffer, one byte at a time, until we find a newline.  If lines are
+very long, this is expensive.
+
+When truncate-lines is nil, this problem doesn't exist for C-n, but a
+similar problem exists for C-p: we need to find the _previous_
+newline (which is many characters back when lines are long), and then
+scan forward until we find a character that is displayed one screen
+line above the one we were at when the user typed C-p.  Revision
+111724 makes sure we don't go back more than one physical line, unless
+really needed, but given the current design of the code, one full line
+is the absolute minimum.
+
+Turning on the newline cache speeds up these searches for a newline by
+a factor of 2, which is not too spectacular, but not negligible.  Any
+objections to turning on that caching by default in all buffers?
+
+Beyond that, either we can find a much more efficient way of finding
+the next or previous newline, or we will need a complete redesign and
+re-implementation of the move_it_* family of functions, which is used
+a lot by the display engine.
+***** Another (the same?) core problem
+The problem is not with the part of text we actually display, because
+the number of characters shown in a window does not depend on whether
+we have truncate-lines=t or nil.  The problem is that most redisplay
+operations always scan some text that is eventually not shown in the
+window.  The longer the lines, the more text we scan that is outside
+of the window.
+For example, any redisplay that needs to scroll the window up (M-v
+etc.) needs to find the buffer position for the window start.  To do
+that, we use move_it_vertically_backward, which moves N screen lines
+up (back) in the buffer.  But what that function does is move N
+_buffer_lines_ back, and then moves forward by screen lines to find
+which position is N screen lines above where we started.  If each line
+is hundreds or thousands of characters, it is clear that moving back N
+buffer lines will move much more than needed, and thereafter moving by
+screen lines back through all those thousands of characters wastes a
+lot of CPU cycles.
+**** Summary
+When each line is very long, scans from functions in the  move_it_*are very
+expensive.  The way to make display significantly faster for long
+lines is to avoid scanning entire lines.  The problem is how to do
+that without losing accuracy, e.g., without missing characters that
+affect the line metrics.
+***** full text
+Re: Long lines and bidi [Was: Re: bug#13623: ...]
+From: 	Eli Zaretskii
+Subject: 	Re: Long lines and bidi [Was: Re: bug#13623: ...]
+Date: 	Fri, 08 Feb 2013 16:07:23 +0200
+
+> Date: Fri, 08 Feb 2013 17:33:47 +0400
+> From: Dmitry Antipov <address@hidden>
+> CC: Emacs development discussions <address@hidden>
+> 
+> On 02/06/2013 10:23 PM, Eli Zaretskii wrote:
+> 
+> > Another area of redisplay optimizations would be the infamous
+> > very-long-lines use case.  (Personally, I think this one is the single
+> > most important deficiency in the current display engine, by far more
+> > important than any other display problem.)
+> 
+> I tried to scroll (down from the beginning and then up from the end) the
+> very pathological file (~150M with just ~500 lines) and got the following
+> profile:
+
+Profile alone is not enough.  Please tell how did you "scroll",
+exactly (which commands did you use), and please also show the
+absolute times it took to perform each command.
+
+> 8.59%        emacs  emacs                          [.] bidi_resolve_weak
+
+What was in the file?  bidi_resolve_weak high on the profile hints
+that it was full of punctuation or digits or banks, which is not
+really an interesting case.
+
+> 7.92%        emacs  emacs                          [.] bidi_level_of_next_char
+> 7.81%        emacs  emacs                          [.] 
+> get_next_display_element
+> 7.12%        emacs  emacs                          [.] 
+> move_it_in_display_line_to
+> 6.96%        emacs  emacs                          [.] x_produce_glyphs
+> 5.06%        emacs  libc-2.16.so                   [.] __memcpy_ssse3_back
+> 4.56%        emacs  emacs                          [.] 
+> next_element_from_buffer
+> 4.38%        emacs  emacs                          [.] 
+> bidi_move_to_visually_next
+> 4.26%        emacs  emacs                          [.] scan_buffer
+> 3.04%        emacs  libXft.so.2.3.1                [.] XftCharIndex
+> 2.93%        emacs  emacs                          [.] bidi_fetch_char
+> 2.67%        emacs  emacs                          [.] 
+> bidi_cache_iterator_state
+> 2.61%        emacs  emacs                          [.] 
+> lookup_glyphless_char_display
+> 2.47%        emacs  libXft.so.2.3.1                [.] XftGlyphExtents
+> 2.35%        emacs  emacs                          [.] bidi_resolve_neutral
+> 1.95%        emacs  emacs                          [.] bidi_get_type
+> 1.86%        emacs  emacs                          [.] detect_coding
+> 1.70%        emacs  emacs                          [.] produce_chars
+> 1.50%        emacs  emacs                          [.] bidi_resolve_explicit_1
+> 1.18%        emacs  emacs                          [.] get_per_char_metric
+> 1.13%        emacs  emacs                          [.] 
+> bidi_cache_search.constprop.4
+> 1.01%        emacs  emacs                          [.] xftfont_text_extents
+> 0.90%        emacs  emacs                          [.] bidi_explicit_dir_char
+> 0.88%        emacs  emacs                          [.] bidi_resolve_explicit
+> ...
+> 
+> So the first question is: is it feasible/possible/desirable to detect that
+> the buffer has no R2L text at all and automatically force 
+> bidi-paragraph-direction
+> to left-to-right and bidi-display-reordering to nil?
+
+Ah, _that_ red herring...  Why is that the first question?  What were
+the times with and without bidi-display-reordering in this file?  In
+my testing, the display engine performs awfully slow in both cases, so
+even though turning off reordering makes it faster, it is still so
+terribly slow that the problem is not going to be solved by that.
+
+As to your question: how can we know what characters are or aren't in
+the buffer without scanning it?  And scanning the buffer is exactly
+what bidi.c does.
+
+As to bidi-paragraph-direction, the detection of the paragraph
+direction is turned off for long paragraphs anyway.  Again, does
+setting bidi-paragraph-direction to left-to-right give you reasonable
+performance in that file?  If not, this is just another red herring.
+
+Anyway, I think this is the wrong way to try to find the solution.
+The problem is not that scanning is slower with the bidi display.  (If
+it were, we would see terribly slow performance with "normal" files as
+well.)  The problem is that _we_scan_too_many_characters_.  See this
+part of the profile:
+
+> 7.12%        emacs  emacs                  [.] move_it_in_display_line_to
+
+The display routines of the move_it_* family, which are heavily used
+in scrolling, cursor movement, and just about any display operation,
+_always_ scan each line from the beginning to the end, before they get
+to the next line.  When each line is very long, those scans are very
+expensive.  The way to make display significantly faster for long
+lines is to avoid scanning entire lines.  The problem is how to do
+that without losing accuracy, e.g., without missing characters that
+affect the line metrics.
+
+IOW, our problem is to find clever algorithms and provide supporting
+data structures for those algorithms, so that we could avoid scanning
+very long lines in their entirety each time we need to move the
+cursor.  When we find these algorithms and code them, the bidi
+"problem" will disappear without a trace.
+***** Eli: How to profile problem with precision timing according to Eli Zaretskii
+> Date: Fri, 08 Feb 2013 16:07:23 +0200
+> From: Eli Zaretskii <address@hidden>
+> Cc: address@hidden
+> 
+> Profile alone is not enough.  Please tell how did you "scroll",
+> exactly (which commands did you use), and please also show the
+> absolute times it took to perform each command.
+
+Btw, if you are serious about finding a solution to the long-line
+display misfeature (or any other too-slow redisplay situation), I
+generally find it necessary to do precision timing of the suspicious
+parts of code, because otherwise it is impossible to find the actual
+culprits.  On GNU/Linux, I use the following simple function:
+
+#+BEGIN_SRC C
+  double
+  timer_time (void)
+  {
+    struct timeval tv;
+
+    gettimeofday (&tv, NULL);
+    return tv.tv_usec * 0.000001 + tv.tv_sec;
+  }
+#+END_SRC
+
+Now, to time a particular portion of the code, do something like this:
+
+#+BEGIN_SRC C
+  double t1, t2;
+  ...
+  t1 = timer_time ();
+  /* here comes the code that should be timed */
+  t2 = timer_time ();
+  if (t2 - t1 > THRESHOLD)
+    fprintf (stderr, "that code took %.4g sec\n", t2 - t1);
+#+END_SRC
+
+The value of THRESHOLD depends on the magnitude of the slow-down you
+are working on.  I generally start with 0.1 of the time it takes to
+perform some redisplay operation; e.g., if it takes 5 sec to move the
+cursor, start with 0.5 sec.  gettimeofday has a sufficient resolution
+on GNU/Linux to get you sub-millisecond accuracy, which is more than
+enough for display engine measurements.
+
+Using the above, you can quickly identify the function(s) that take
+most of the time of a particular redisplay operation, then time the
+parts of those functions to find the most expensive parts, and so on,
+recursively, until you find the hot spots (more than 50% of the slow
+operation).
+***** Dmitry: How to profile problem the 2013 way according to Dmitry Antipov
+Ah, please, there is a difference between 2013 and 1980.
+
+#+BEGIN_SRC shell
+$ perf record -e stalled-cycles-frontend -e stalled-cycles-backend -F 10000 
+[workload]
+$ perf report --stdio ==>
+
+25.18%        emacs  emacs                          [.] scan_buffer
+ 7.04%        emacs  emacs                          [.] bidi_resolve_weak
+...
+  perf annotate scan_buffer --stdio ==>
+
+      :                while (cursor >= ceiling_addr)
+      :                  {
+      :                    unsigned char *scan_start = cursor;
+      :
+      :                    while (*cursor != target && --cursor >= ceiling_addr)
+65.74 :        526620:       movzbl (%r14),%eax
+ 6.46 :        526624:       cmp    %r15d,%eax
+ 0.17 :        526627:       je     526632 <scan_buffer+0x512>
+27.33 :        526629:       sub    $0x1,%r14
+ 0.03 :        52662d:       cmp    %r14,%rbx
+ 0.19 :        526630:       jbe    526620 <scan_buffer+0x500>
+      :                      ;
+#+END_SRC
+
+So, ~90% of time spent in scan_buffer is:
+
+799                while (*cursor != target && --cursor >= ceiling_addr)
+800                  ;
+
+Dmitry
+
+***** Eli: What do you mean it isn't 1980, cannot optimize that function
+> Date: Fri, 08 Feb 2013 20:38:24 +0400
+> From: Dmitry Antipov <address@hidden>
+> CC: address@hidden
+> 
+> On 02/08/2013 06:46 PM, Eli Zaretskii wrote:
+> 
+> > Btw, if you are serious about finding a solution to the long-line
+> > display misfeature (or any other too-slow redisplay situation), I
+> > generally find it necessary to do precision timing of the suspicious
+> > parts of code, because otherwise it is impossible to find the actual
+> > culprits.  On GNU/Linux, I use the following simple function:
+> 
+> Ah, please, there is a difference between 2013 and 1980.
+
+Sorry, you lost me here.
+
+> 1) perf record -e stalled-cycles-frontend -e stalled-cycles-backend -F 10000 
+> [workload]
+> 2) perf report --stdio ==>
+> 
+> 25.18%        emacs  emacs                          [.] scan_buffer
+>   7.04%        emacs  emacs                          [.] bidi_resolve_weak
+
+That's why testing redisplay on buffers which are predominantly
+punctuation will give you unrealistic measurements.  (If you want to
+understand why, read UAX#9.)
+
+> So, ~90% of time spent in scan_buffer is:
+> 
+> 799                while (*cursor != target && --cursor >= ceiling_addr)
+> 800                  ;
+
+Which cannot be optimized.
+***** Paul E.: Yes you can optimize with memrchr but not easily portable
+On 02/08/2013 08:52 AM, Eli Zaretskii wrote:
+>> > So, ~90% of time spent in scan_buffer is:
+>> > 
+>> > 799                while (*cursor != target && --cursor >= ceiling_addr)
+>> > 800                  ;
+
+> Which cannot be optimized.
+
+It can be sped up somewhat, by using memrchr.
+
+This won't solve these performance issues, but it helps:
+on my platform (x86-64 Ubuntu 12.10) I ran Dmitry's scroll-both benchmark
+<http://lists.gnu.org/archive/html/emacs-devel/2013-02/msg00147.html>
+on a real file (the trunk's src/xdisp.c), and it was 25% faster overall
+(1.19 seconds versus 1.49 seconds) when I used memrchr there
+and memchr for forward searches.
+
+I'll attach the patch I used.  Eli, it'll need a bit of hacking to
+port to MS-Windows, since the substitute memrchr implementation
+(which is supplied) will need to be compiled.
+
+Dmitry, is this something you can easily try with your benchmarks?
+
+Most of the attached patch is boilerplate taken unmodified from gnulib,
+to support memrchr on non-GNU platforms.  The key part of the change is
+at the end, to src/search.c.
+***** 4.5 seconds vs 6 seconds isn't enough/it optimizes wrong place.. need shiny new algorithm
+          25% faster is still terribly slow for redisplay.  xdisp.c doesn't have
+          a problem in the first place (1.49 sec divided by 100 is 15 msec, not
+          something users will notice, let alone the difference between 15 and
+          11 msec).  And for files with long lines, these 25% will not solve
+          anything, since 6 sec _per_scroll_, give or take 25%, is intolerably
+          slow.
+          
+          I don't think we should make this optimization, because it optimizes
+          in the wrong place.  The problem is not with scan_buffer, the problem
+          is that it (actually, its callers) get called way too much.
+          
+          This is a classic case where solving a slow operation needs a radical
+          change in the algorithms, not loophole optimizations.
+          
+          > Most of the attached patch is boilerplate taken unmodified from gnulib,
+          > to support memrchr on non-GNU platforms.  The key part of the change is
+          > at the end, to src/search.c.
+
+          I don't understand why you removed the TARGET argument of
+          scan_buffer.  The fact that all its callers use it for looking for a
+          newline doesn't mean it cannot be used otherwise.  At the very least,
+          the name of the function should be changed to reflect the change.
+***** Paul: Yeah, but it's faster and not more complex.. wat do
+On 02/09/2013 12:46 AM, Eli Zaretskii wrote:
+
+> 25% faster is still terribly slow for redisplay.
+
+Yes, as I said, it doesn't solve the performance problem.
+Still, it doesn't complicate the code, and it significantly
+improves speed in code likely to be executed often, so it
+seems worth doing in its own right.
+
+> I don't understand why you removed the TARGET argument of
+> scan_buffer.  The fact that all its callers use it for looking for a
+> newline doesn't mean it cannot be used otherwise.
+
+If we ever need that ability we can put it back in.  In the meantime
+there's no need for the generality and I found it confusing.
+
+> At the very least, the name of the function should be
+> changed to reflect the change.
+
+Sure, what name do you suggest?  scan_newline is already taken.
+Perhaps scan_buffer_newline?
+
+This area is a bit messed up, unfortunately -- scan_newline has
+comments saying that it looks for carriage return (!) but
+it does not in fact do that.
+***** Eli: I said don't want the change, but here's my advice on naming the function
+> Date: Sat, 09 Feb 2013 01:05:01 -0800
+> From: Paul Eggert <address@hidden>
+> Cc: address@hidden, address@hidden
+> 
+> > At the very least, the name of the function should be
+> > changed to reflect the change.
+> 
+> Sure, what name do you suggest?  scan_newline is already taken.
+> Perhaps scan_buffer_newline?
+
+I'd use find_newline, since 2 out of 3 of its callers are
+find_next_newline_no_quit and find_before_next_newline.
+
+> This area is a bit messed up, unfortunately -- scan_newline has
+> comments saying that it looks for carriage return (!) but
+> it does not in fact do that.
+
+People tend to forget updating the commentary when they change code.
+***** Paul: Alright here, I improved more
+On 02/09/2013 01:33 AM, Eli Zaretskii wrote:
+> I'd use find_newline, since 2 out of 3 of its callers are
+> find_next_newline_no_quit and find_before_next_newline.
+
+OK, thanks, attached is a revised patch to do that.  It also removes
+the confusing comments about carriage return, and identifies
+two or three more places where it's clearer to use memchr.
+***** Eli: I predict your fix won't improve perf in real world (no direct answer, nudge to try something else)
+> Date: Sat, 09 Feb 2013 01:05:01 -0800
+> From: Paul Eggert <address@hidden>
+> CC: address@hidden, address@hidden
+> 
+> On 02/09/2013 12:46 AM, Eli Zaretskii wrote:
+> 
+> > 25% faster is still terribly slow for redisplay.
+> 
+> Yes, as I said, it doesn't solve the performance problem.
+> Still, it doesn't complicate the code, and it significantly
+> improves speed in code likely to be executed often, so it
+> seems worth doing in its own right.
+
+I suspect that the use case that makes scan_buffer so high on the
+profile is very much skewed.  My crystal ball says that the file in
+question was one very long paragraph, or at least had many-many
+_thousands_ of lines between empty lines that delimit paragraphs.
+scan_buffer is high on the profile because the bidi.c code tries to
+find the beginning of a paragraph, which determines the base direction
+of the paragraph, which in turn determines how the text should be
+reordered for display.
+
+By contrast, most real-life files have much less text between empty
+lines, so scan_buffer will not be at any prominent place in the
+profile.  But redisplay of a buffer with very long lines will still be
+awfully slow, even if there's an empty line between every 2 long
+lines, although scan_buffer will no longer be a factor.
+
+OTOH, if you create a file with a single long paragraph, but whose
+lines have "normal" width, like 100 characters, redisplay will perform
+adequately, even though scan_buffer will be heavily used.  (It would
+be interesting to see a profile for that, btw.)
+
+IOW, the solution in bidi.c for extremely long paragraphs is optimized
+for the 99% of use cases, where lines are not too long, i.e. for those
+cases where the old unidirectional display engine gave reasonable
+performance.  Dmitry's use case, OTOH, is skewed on several counts:
+
+ . it uses extremely long lines
+ . it uses too many neutral/weak characters
+ . it uses extremely long paragraphs
+
+This simultaneously hits on several unrelated weaknesses of the
+current display engine, with the result that the profile is a
+combination of at least 3 different reasons for slow-down, which makes
+it very hard to analyze the results and look for solutions.
+
+That is why I think we should attack this problem one reason at a
+time.  The most important reason is the first one: long lines cause
+the display code traverse too much of buffer text.  This is why you
+see x_produce_glyphs so high on the profile in the unidirectional
+case: it examines too many characters, much more than what will be
+actually displayed on the screen.  Solve this problem, and the 2nd one
+will simply disappear without a trace, because it is at least linear
+in the number of scanned characters.  If the 3rd problem is still a
+factor, after the 1st one is gone, we can tune the current
+optimization at that time.
+***** Eli: I committed simple fixes such as yours, but not yours. Simple fixes can improve performance, so make some
+> Date: Sat, 09 Feb 2013 12:01:46 +0200
+> From: Eli Zaretskii <address@hidden>
+> Cc: address@hidden, address@hidden
+> 
+> That is why I think we should attack this problem one reason at a
+> time.  The most important reason is the first one: long lines cause
+> the display code traverse too much of buffer text.  This is why you
+> see x_produce_glyphs so high on the profile in the unidirectional
+> case: it examines too many characters, much more than what will be
+> actually displayed on the screen.
+
+I just committed to the trunk revision 111724 with a couple of simple
+changes which speed up by a factor of 3 some redisplay operations,
+such as M-v or M->, in a buffer with very long lines.  Please try it.
+
+This is by no means the complete solution, even for the situations
+where it provides a 3-fold speed-up: we need the speed-up to be much
+more aggressive.  But it does demonstrate how simple changes can have
+a significant effect in this area.
+
+Stay tuned.
+***** Dmitry: Why doesn't my Imla'ei push bidi really hard?
+Yet another interesting profile (generated by scroll-both micro-benchmark with
+r111730) is shown below.
+
+Input is 4K lines, each line is ~27K bytes, Imla'ei (modern Arabic) script. IIUC
+this R2L text with long lines should push bidi really hard, but ... bidi core
+routines (by itself) are almost irrelevant in the profile:
+
+    39.96%        emacs  emacs                          [.] scan_buffer
+    28.72%        emacs  emacs                          [.] 
+buf_charpos_to_bytepos
+    21.82%        emacs  emacs                          [.] 
+buf_bytepos_to_charpos
+     0.59%        emacs  emacs                          [.] re_match_2_internal
+     0.51%        emacs  emacs                          [.] sub_char_table_ref
+     0.42%        emacs  emacs                          [.] mark_object
+     0.23%        emacs  emacs                          [.] 
+composition_gstring_width
+     0.19%        emacs  libc-2.16.so                   [.] __memcpy_ssse3_back
+     0.18%        emacs  emacs                          [.] x_produce_glyphs
+     0.17%        emacs  emacs                          [.] 
+move_it_in_display_line_to
+     0.17%        emacs  emacs                          [.] hash_lookup
+     0.17%        emacs  emacs                          [.] Fgarbage_collect
+     0.17%        emacs  emacs                          [.] lface_hash
+     0.16%        emacs  emacs                          [.] decode_coding_utf_8
+     0.16%        emacs  emacs                          [.] face_for_font
+     0.16%        emacs  emacs                          [.] 
+composition_gstring_p
+     0.15%        emacs  emacs                          [.] compile_pattern
+     0.15%        emacs  emacs                          [.] 
+get_next_display_element
+     0.14%        emacs  emacs                          [.] 
+bidi_level_of_next_char
+     0.12%        emacs  emacs                          [.] font_range
+     0.12%        emacs  emacs                          [.] bidi_fetch_char
+     0.12%        emacs  emacs                          [.] internal_equal
+     0.11%        emacs  emacs                          [.] autocmp_chars
+     0.11%        emacs  emacs                          [.] char_table_ref
+     0.11%        emacs  libgtk-3.so.0.600.4            [.] 0x0000000000115bf0
+     0.10%        emacs  emacs                          [.] 
+next_element_from_buffer
+     0.10%        emacs  emacs                          [.] 
+composition_update_it
+     0.10%        emacs  emacs                          [.] boyer_moore
+
+Dmitry
+***** Dmitry: Paul's simple fix improves stuff... see? We should use it
+On 02/11/2013 09:43 AM, Dmitry Antipov wrote:
+
+    Yet another interesting profile (generated by scroll-both micro-benchmark with
+    r111730) is shown below.
+
+    Input is 4K lines, each line is ~27K bytes, Imla'ei (modern Arabic) script. IIUC
+    this R2L text with long lines should push bidi really hard, but ... bidi core
+    routines (by itself) are almost irrelevant in the profile:
+
+         39.96%        emacs  emacs                          [.] scan_buffer
+         28.72%        emacs  emacs                          [.] 
+    buf_charpos_to_bytepos
+         21.82%        emacs  emacs                          [.] 
+    buf_bytepos_to_charpos
+          0.59%        emacs  emacs                          [.] re_match_2_internal
+
+
+... and with Paul's mem(r)chr patch it is:
+
+    43.38%        emacs  emacs                          [.] 
+buf_charpos_to_bytepos
+    28.42%        emacs  emacs                          [.] 
+buf_bytepos_to_charpos
+    13.10%        emacs  libc-2.16.so                   [.] memrchr
+     0.85%        emacs  emacs                          [.] re_match_2_internal
+...
+
+So I should vote YES. This is simple optimization which really makes sense,
+and I suspect that the "less usual" input is, the more sense it has.
+***** Eli: I'm not opposed to memchar which fix used. But Paul's fix isn't a solution
+> Date: Mon, 11 Feb 2013 11:54:57 +0400
+> From: Dmitry Antipov <address@hidden>
+> CC: Eli Zaretskii <address@hidden>, Paul Eggert <address@hidden>
+> 
+> On 02/11/2013 09:43 AM, Dmitry Antipov wrote:
+> 
+> > Yet another interesting profile (generated by scroll-both micro-benchmark 
+> > with
+> > r111730) is shown below.
+> >
+> > Input is 4K lines, each line is ~27K bytes, Imla'ei (modern Arabic) script. 
+> > IIUC
+> > this R2L text with long lines should push bidi really hard, but ... bidi 
+> > core
+> > routines (by itself) are almost irrelevant in the profile:
+> >
+> >      39.96%        emacs  emacs                          [.] scan_buffer
+> >      28.72%        emacs  emacs                          [.] 
+> > buf_charpos_to_bytepos
+> >      21.82%        emacs  emacs                          [.] 
+> > buf_bytepos_to_charpos
+> >       0.59%        emacs  emacs                          [.] 
+> > re_match_2_internal
+> 
+> ... and with Paul's mem(r)chr patch it is:
+> 
+>      43.38%        emacs  emacs                          [.] 
+> buf_charpos_to_bytepos
+>      28.42%        emacs  emacs                          [.] 
+> buf_bytepos_to_charpos
+>      13.10%        emacs  libc-2.16.so                   [.] memrchr
+>       0.85%        emacs  emacs                          [.] 
+> re_match_2_internal
+
+Without absolute times, it's hard to judge the improvement.
+
+> So I should vote YES. This is simple optimization which really makes sense,
+> and I suspect that the "less usual" input is, the more sense it has.
+
+I'm not opposed to using memchr where possible.  I'm just saying that
+we should NOT regard this as any kind of solution for the long-lines
+problem with the current display engine.  To fix that problem, we need
+to speed up redisplay by one or two orders of magnitude (it currently
+takes several hundreds of milliseconds to several seconds; it should
+take a few milliseconds, 10 msec max).  That is a far cry from 25%
+improvement we will get with memchr
+***** Paul: My fix is good. Merged it! Found new bug, looking into
+On 02/11/13 08:47, Eli Zaretskii wrote:
+> we should NOT regard this as any kind of solution for the long-lines
+> problem with the current display engine.
+
+Yes, the memchr/memrchr improvement is a relatively minor
+performance improvement; I suggested it primarily
+because it's easy to do and doesn't complicate Emacs proper.
+I pushed it into the trunk as bzr 111741.
+
+By the way, in reviewing this area it appears to me that
+there must be a bug in the code that caches newline locations
+when searching backwards.  The above performance improvement
+doesn't affect this bug.  I'll try to follow up on this soon.
+***** Eli: Dmitry this is how you push bidi really hard
+> Date: Mon, 11 Feb 2013 09:43:17 +0400
+> From: Dmitry Antipov <address@hidden>
+> CC: Eli Zaretskii <address@hidden>, Paul Eggert <address@hidden>
+> 
+> Yet another interesting profile (generated by scroll-both micro-benchmark with
+> r111730) is shown below.
+> 
+> Input is 4K lines, each line is ~27K bytes, Imla'ei (modern Arabic) script.
+
+Can you publish the file, or the URL where you downloaded it from?
+
+> IIUC this R2L text with long lines should push bidi really hard,
+> but... bidi core routines (by itself) are almost irrelevant in the
+> profile:
+
+Actually, that's expected, see below.
+
+>      39.96%        emacs  emacs                          [.] scan_buffer
+>      28.72%        emacs  emacs                          [.] 
+> buf_charpos_to_bytepos
+>      21.82%        emacs  emacs                          [.] 
+> buf_bytepos_to_charpos
+>       0.59%        emacs  emacs                          [.] 
+> re_match_2_internal
+>       0.51%        emacs  emacs                          [.] 
+> sub_char_table_ref
+>       0.42%        emacs  emacs                          [.] mark_object
+>       0.23%        emacs  emacs                          [.] 
+> composition_gstring_width
+>       0.19%        emacs  libc-2.16.so                   [.] 
+> __memcpy_ssse3_back
+>       0.18%        emacs  emacs                          [.] x_produce_glyphs
+>       0.17%        emacs  emacs                          [.] 
+> move_it_in_display_line_to
+>       0.17%        emacs  emacs                          [.] hash_lookup
+>       0.17%        emacs  emacs                          [.] Fgarbage_collect
+>       0.17%        emacs  emacs                          [.] lface_hash
+>       0.16%        emacs  emacs                          [.] 
+> decode_coding_utf_8
+>       0.16%        emacs  emacs                          [.] face_for_font
+>       0.16%        emacs  emacs                          [.] 
+> composition_gstring_p
+>       0.15%        emacs  emacs                          [.] compile_pattern
+>       0.15%        emacs  emacs                          [.] 
+> get_next_display_element
+>       0.14%        emacs  emacs                          [.] 
+> bidi_level_of_next_char
+>       0.12%        emacs  emacs                          [.] font_range
+>       0.12%        emacs  emacs                          [.] bidi_fetch_char
+>       0.12%        emacs  emacs                          [.] internal_equal
+>       0.11%        emacs  emacs                          [.] autocmp_chars
+>       0.11%        emacs  emacs                          [.] char_table_ref
+>       0.11%        emacs  libgtk-3.so.0.600.4            [.] 
+> 0x0000000000115bf0
+>       0.10%        emacs  emacs                          [.] 
+> next_element_from_buffer
+>       0.10%        emacs  emacs                          [.] 
+> composition_update_it
+>       0.10%        emacs  emacs                          [.] boyer_moore
+
+The Arabic script is a heavy user of character compositions: they are
+important for correct shaping of the glyphs, without which any speaker
+of Arabic will turn away in disgust.  The fact that you see functions
+like composition_update_it, composition_gstring_p,
+composition_gstring_width, and sub_char_table_ref all hint towards
+this.  Character compositions work by scanning the vicinity of a
+composable character using regular expression matching in Lisp.  That
+is why you see re_match_2_internal relatively high in the profile.
+Handling these compositions can obscure any bidi reordering.  To
+disable this factor, turn off auto-composition-mode.
+
+More importantly, you cannot easily "push bidi really hard", not with
+a file that consists of predominantly RTL characters.  That's because
+such a file is as easy to display as a pure LTR text: the characters
+are delivered for display entirely in their logical order in the
+buffer, and only laid out starting at the right margin of the window
+instead of at the left margin.
+
+To exercise bidi.c, you need heavily mixed RTL and LTR text, with
+digits, punctuation, and lots of embeddings and directional overrides
+(using the LRE, RLE, RLO, and LRO control characters), which push and
+pop the reordering stack.  Only then the reordering of characters will
+become non-trivial, and you _might_ see some bidi functions as hot
+spots.  I say "might" because bidi.c uses a dynamic cache which allows
+it to fetch and analyze each character only once, even if reordering
+jumps here and there like a young goat.  Thus, the only overhead of
+reordering is the logic that decides where in the cache is the next
+character to deliver for display; the cache is accessed directly (it
+is implemented as a linear array).
+
+There could be rare pathological situations where bidi.c needs to
+examine lots (and I'm talking tens or hundreds of thousands) of
+characters for some simple redisplay operation.  A few of these were
+discovered and taken care of during late stages of v24.1 development,
+but maybe there are some more.  These typically show up as heavy usage
+of bidi_fetch_char or its subroutines, or of bidi_find_paragraph_start
+and its subroutines.  I haven't seen such problems since last July.
+***** Dmitry: I used Quran text but can't reshare cuz licensing
+On 02/11/2013 08:42 PM, Eli Zaretskii wrote:
+
+    Can you publish the file, or the URL where you downloaded it from?
+
+
+Actually it was artificially generated from Quran text available
+at http://tanzil.net/download.  I can't publish it because the license
+doesn't allow any modifications, so I assume that any derivatives are
+also illegal; but I also assume that we still can use them just for
+the testing purposes, e.g. without any redistribution.
+
+Dmitry
+***** Eli: More specific instructions of how you generated it please
+> Date: Mon, 11 Feb 2013 21:53:32 +0400
+> From: Dmitry Antipov <address@hidden>
+> CC: address@hidden, address@hidden
+> 
+> On 02/11/2013 08:42 PM, Eli Zaretskii wrote:
+> 
+> > Can you publish the file, or the URL where you downloaded it from?
+> 
+> Actually it was artificially generated from Quran text available
+> at http://tanzil.net/download.
+
+Can you tell how you generated it?
+***** Dmitry: I did it this way
+#+BEGIN_SRC shell
+# Get first 100 lines and convert them to the only line
+head -n 100 < quran-simple.txt | tr '\n' ' ' | tr '\r' ' ' > 0.txt
+# Add newline
+echo -ne "\n" >> 0.txt
+# Copy it 4096 times
+cat 0.txt 0.txt 0.txt 0.txt  > 1.txt
+cat 1.txt 1.txt 1.txt 1.txt > 0.txt
+cat 0.txt 0.txt 0.txt 0.txt  > 1.txt
+cat 1.txt 1.txt 1.txt 1.txt > 0.txt
+cat 0.txt 0.txt 0.txt 0.txt  > 1.txt
+cat 1.txt 1.txt 1.txt 1.txt > 0.txt
+#+END_SRC
+I realize that this is pretty artificial and doesn't reflect
+the real structure of any Arabic text. This is definitely a trick
+in attempt to exploit some corner cases here and there.
+
+Dmitry
+***** Eli: Found some stuff, maybe we should cache by default in all buffers
+ Date: Sun, 10 Feb 2013 18:57:00 +0200
+> From: Eli Zaretskii <address@hidden>
+> Cc: address@hidden
+> 
+> I just committed to the trunk revision 111724 with a couple of simple
+> changes which speed up by a factor of 3 some redisplay operations,
+> such as M-v or M->, in a buffer with very long lines.  Please try it.
+
+Further measurements indicate that the bottleneck is in searches for
+previous or next newline, or N-th previous/next newline.  These
+searches are at the core of functions that compute pixel dimensions of
+buffer text, when the display engine needs to figure out where to
+start displaying the window after scrolling, or where to put point
+after C-p or C-n.
+
+As a typical example, a C-n in a buffer with truncate-lines set
+non-nil requires us to find the next physical line in the buffer,
+i.e. the next newline.  We currently do that by searching forward in
+the buffer, one byte at a time, until we find a newline.  If lines are
+very long, this is expensive.
+
+When truncate-lines is nil, this problem doesn't exist for C-n, but a
+similar problem exists for C-p: we need to find the _previous_
+newline (which is many characters back when lines are long), and then
+scan forward until we find a character that is displayed one screen
+line above the one we were at when the user typed C-p.  Revision
+111724 makes sure we don't go back more than one physical line, unless
+really needed, but given the current design of the code, one full line
+is the absolute minimum.
+
+Turning on the newline cache speeds up these searches for a newline by
+a factor of 2, which is not too spectacular, but not negligible.  Any
+objections to turning on that caching by default in all buffers?
+
+Beyond that, either we can find a much more efficient way of finding
+the next or previous newline, or we will need a complete redesign and
+re-implementation of the move_it_* family of functions, which is used
+a lot by the display engine.
+***** Drew: Not sure about other stuff, but does cache by default make sense for other stuff
+> Turning on the newline cache speeds up these searches for a newline by
+> a factor of 2, which is not too spectacular, but not negligible.  Any
+> objections to turning on that caching by default in all buffers?
+
+I only followed some of all that you wrote, and I haven't followed the thread.
+But a question:
+
+You do not mention any added cost, AFAICT (but again, I did not follow in
+detail).
+
+Is the caching relevant (helpful) regardless of the value of truncate-lines or
+whether visual-line-mode etc. is on?  IOW, does it make sense for many common
+configurations or just for some particular configs?
+
+If it is not particularly advantageous for some common configs, does it have a
+cost that would suggest it should not be done in those configs, or is it pretty
+much without a downside?
+
+What about "for all buffers"?  Does it make sense also for buffers such as Dired
+and Info, which have relatively short line lengths?
+
+If there is no extra cost or other drawback then such considerations probably do
+not matter, of course.
+***** Eli: Mostly, will improve a lot. Can fix on case by case basis if modes don't like it
+> From: "Drew Adams" <address@hidden>
+> Cc: <address@hidden>, <address@hidden>
+> Date: Mon, 11 Feb 2013 09:55:36 -0800
+> 
+> > Turning on the newline cache speeds up these searches for a newline by
+> > a factor of 2, which is not too spectacular, but not negligible.  Any
+> > objections to turning on that caching by default in all buffers?
+> 
+> I only followed some of all that you wrote, and I haven't followed the thread.
+> But a question:
+> 
+> You do not mention any added cost, AFAICT (but again, I did not follow in
+> detail).
+
+The overhead is only visible with very short lines, and is negligible
+even then.
+
+> Is the caching relevant (helpful) regardless of the value of truncate-lines or
+> whether visual-line-mode etc. is on?  IOW, does it make sense for many common
+> configurations or just for some particular configs?
+
+It always makes sense.  Searching for newlines is a very frequent
+operation in Emacs, not only in the display engine.
+
+> What about "for all buffers"?  Does it make sense also for buffers such as 
+> Dired
+> and Info, which have relatively short line lengths?
+
+It doesn't hurt there, AFAICS.  And we can always turn it off in the
+mode function, if we find later that some modes don't like it.
+***** Dmitry: some tests that meet your suggested format
+On 02/08/2013 06:07 PM, Eli Zaretskii wrote:
+
+    Profile alone is not enough.  Please tell how did you "scroll",
+    exactly (which commands did you use), and please also show the
+    absolute times it took to perform each command.
+
+
+(defun scroll-both ()
+  (interactive)
+  (let ((start (float-time)))
+    (progn
+      (dotimes (n 100) (progn (scroll-up) (redisplay)))
+      (goto-char (point-max))
+      (dotimes (n 100) (progn (scroll-down) (redisplay)))
+      (message "Elapsed %f seconds" (- (float-time) start)))))
+
+With bidi, ~600 second elapsed, and:
+
+    25.18%        emacs  emacs                          [.] scan_buffer
+     7.04%        emacs  emacs                          [.] bidi_resolve_weak
+     6.47%        emacs  emacs                          [.] 
+get_next_display_element
+     6.37%        emacs  emacs                          [.] 
+bidi_level_of_next_char
+     5.14%        emacs  libc-2.16.so                   [.] __memcpy_ssse3_back
+     5.05%        emacs  emacs                          [.] 
+move_it_in_display_line_to
+     4.94%        emacs  emacs                          [.] x_produce_glyphs
+     4.84%        emacs  libXft.so.2.3.1                [.] XftCharIndex
+     3.72%        emacs  emacs                          [.] 
+bidi_move_to_visually_next
+     3.70%        emacs  emacs                          [.] 
+next_element_from_buffer
+     2.90%        emacs  libXft.so.2.3.1                [.] XftGlyphExtents
+     2.05%        emacs  emacs                          [.] bidi_fetch_char
+     2.02%        emacs  emacs                          [.] 
+lookup_glyphless_char_display
+     2.01%        emacs  emacs                          [.] bidi_resolve_neutral
+     1.76%        emacs  emacs                          [.] 
+bidi_cache_iterator_state
+     1.70%        emacs  emacs                          [.] bidi_get_type
+     1.51%        emacs  emacs                          [.] 
+bidi_resolve_explicit_1
+     1.18%        emacs  libXft.so.2.3.1                [.] XftFontCheckGlyph
+     1.12%        emacs  emacs                          [.] xftfont_encode_char
+     1.01%        emacs  emacs                          [.] xftfont_text_extents
+
+Without bidi, ~230 seconds elapsed, and:
+
+    21.36%        emacs  emacs                          [.] x_produce_glyphs
+    17.92%        emacs  emacs                          [.] 
+get_next_display_element
+    15.07%        emacs  emacs                          [.] 
+move_it_in_display_line_to
+     8.37%        emacs  emacs                          [.] 
+next_element_from_buffer
+     8.34%        emacs  libXft.so.2.3.1                [.] XftCharIndex
+     6.12%        emacs  emacs                          [.] 
+lookup_glyphless_char_display
+     4.21%        emacs  libXft.so.2.3.1                [.] XftGlyphExtents
+     3.07%        emacs  emacs                          [.] xftfont_encode_char
+     2.68%        emacs  emacs                          [.] xftfont_text_extents
+     1.87%        emacs  emacs                          [.] get_per_char_metric
+     1.53%        emacs  libXft.so.2.3.1                [.] XftFontCheckGlyph
+     1.49%        emacs  emacs                          [.] 
+composition_compute_stop_pos
+     1.35%        emacs  emacs                          [.] set_iterator_to_next
+
+cache-long-line-scans is nil in both cases.
+
+I suspect that scroll should be direction-agnostic in theory; but both profiled
+runs shows that scroll-down is much, much slower than scroll-up (that's why
+elapsed time is so huge in both cases).
+
+    What was in the file?  bidi_resolve_weak high on the profile hints
+    that it was full of punctuation or digits or banks, which is not
+    really an interesting case.
+
+
+Your guess is correct; but I suspect that an average text in human language
+contains less punctuations, digits and blanks than the C source code of the
+same size :-).
+
+    Ah, _that_ red herring...  Why is that the first question?  What were
+    the times with and without bidi-display-reordering in this file?  In
+    my testing, the display engine performs awfully slow in both cases, so
+    even though turning off reordering makes it faster, it is still so
+    terribly slow that the problem is not going to be solved by that.
+
+    As to your question: how can we know what characters are or aren't in
+    the buffer without scanning it?  And scanning the buffer is exactly
+    what bidi.c does.
+
+
+Hm... insert-file-contents tries to detect encoding by looking at first 1K
+and last 3K of the file. Why the similar approach isn't applicable to bidi?
+
+Dmitry
+
+***** Eli: this looks consisent with my findings. Your theory is wrong. bidi must be more careful about detecting encoding
+> Date: Fri, 08 Feb 2013 20:21:57 +0400
+> From: Dmitry Antipov <address@hidden>
+> CC: address@hidden
+> 
+> On 02/08/2013 06:07 PM, Eli Zaretskii wrote:
+> 
+> > Profile alone is not enough.  Please tell how did you "scroll",
+> > exactly (which commands did you use), and please also show the
+> > absolute times it took to perform each command.
+> 
+> (defun scroll-both ()
+>    (interactive)
+>    (let ((start (float-time)))
+>      (progn
+>        (dotimes (n 100) (progn (scroll-up) (redisplay)))
+>        (goto-char (point-max))
+>        (dotimes (n 100) (progn (scroll-down) (redisplay)))
+>        (message "Elapsed %f seconds" (- (float-time) start)))))
+> 
+> With bidi, ~600 second elapsed, and:
+> 
+>      25.18%        emacs  emacs                          [.] scan_buffer
+>       7.04%        emacs  emacs                          [.] bidi_resolve_weak
+>       6.47%        emacs  emacs                          [.] 
+> get_next_display_element
+>       6.37%        emacs  emacs                          [.] 
+> bidi_level_of_next_char
+>       5.14%        emacs  libc-2.16.so                   [.] 
+> __memcpy_ssse3_back
+>       5.05%        emacs  emacs                          [.] 
+> move_it_in_display_line_to
+>       4.94%        emacs  emacs                          [.] x_produce_glyphs
+>       4.84%        emacs  libXft.so.2.3.1                [.] XftCharIndex
+>       3.72%        emacs  emacs                          [.] 
+> bidi_move_to_visually_next
+>       3.70%        emacs  emacs                          [.] 
+> next_element_from_buffer
+>       2.90%        emacs  libXft.so.2.3.1                [.] XftGlyphExtents
+>       2.05%        emacs  emacs                          [.] bidi_fetch_char
+>       2.02%        emacs  emacs                          [.] 
+> lookup_glyphless_char_display
+>       2.01%        emacs  emacs                          [.] 
+> bidi_resolve_neutral
+>       1.76%        emacs  emacs                          [.] 
+> bidi_cache_iterator_state
+>       1.70%        emacs  emacs                          [.] bidi_get_type
+>       1.51%        emacs  emacs                          [.] 
+> bidi_resolve_explicit_1
+>       1.18%        emacs  libXft.so.2.3.1                [.] XftFontCheckGlyph
+>       1.12%        emacs  emacs                          [.] 
+> xftfont_encode_char
+>       1.01%        emacs  emacs                          [.] 
+> xftfont_text_extents
+> 
+> Without bidi, ~230 seconds elapsed, and:
+
+This is consistent with my past measurements:
+
+ (a) disabling bidi makes redisplay faster, but it is still awfully
+     slow (2.3 sec per scroll);
+
+ (b) bidi iteration is about 2 times slower than the unidirectional
+     one (you get 3 times slower because your buffer is full of weak
+     characters, which make the bidi iterator work harder due to the
+     requirements of the Unicode Bidirectional Algorithm.
+
+> I suspect that scroll should be direction-agnostic in theory
+
+That theory is wrong.  The reason is that functions that move by
+display lines can only move forward.  So moving backward is coded very
+differently (a.k.a. "slower").
+
+> but both profiled runs shows that scroll-down is much, much slower
+> than scroll-up (that's why elapsed time is so huge in both cases).
+
+That's expected; see also my explanation in a previous mail, which
+describes what move_it_vertically_backward does.  That function is
+used a lot by scroll-down.
+
+> > What was in the file?  bidi_resolve_weak high on the profile hints
+> > that it was full of punctuation or digits or banks, which is not
+> > really an interesting case.
+> 
+> Your guess is correct; but I suspect that an average text in human language
+> contains less punctuations, digits and blanks than the C source code of the
+> same size :-).
+
+An average C code still has only a small fraction of punctuation.
+Just look at any C file.
+
+> > As to your question: how can we know what characters are or aren't in
+> > the buffer without scanning it?  And scanning the buffer is exactly
+> > what bidi.c does.
+> 
+> Hm... insert-file-contents tries to detect encoding by looking at first 1K
+> and last 3K of the file. Why the similar approach isn't applicable to bidi?
+
+No.  Detecting encoding by a small portion is a heuristic that works
+only because most every file is encoded consistently.  When a file is
+encoded inconsistently, the result of the above decoding heuristic is
+horribly wrong, and the consequences for the user are grave.  As a
+recent example, see bug #13505.
+
+By contrast, scripts used in a text file do not have to be consistent
+or uniformly distributed over the file at all.  So the probability to
+get this wrong will be much higher.
+***** Stefan: Fix needs more than constant factor speedup. did you check all branches?
+> So the first question is: is it feasible/possible/desirable to detect
+> that the buffer has no R2L text at all and automatically force
+> bidi-paragraph-direction to left-to-right and bidi-display-reordering
+> to nil?
+
+Would this speed things up by a constant factor, or would it actually
+remove an O(N) factor?
+
+I think a fix will need more than a constant factor speed up.
+
+Did you check both the truncate-lines=nil and the truncate-lines=t cases?
+I think that for the truncate-lines=t case, we won't be able to avoid
+the O(linelength) slowdown (but we should try and skip the non-displayed
+part of lines faster, especially when there's no
+`display/after/before-string' property).
+
+
+        Stefan
+***** Eli: Agreed on more than constant factor. Another core problem is:
+
+*** http://emacs.stackexchange.com/questions/598/how-do-i-prevent-extremely-long-lines-making-emacs-slow
+*** https://lists.gnu.org/archive/html/help-gnu-emacs/2013-10/msg00342.html
+** useful stuff
+*** emacs source code info
+`src'       holds the C code for Emacs (the Emacs Lisp interpreter and
+            its primitives, the redisplay code, and some basic editing
+            functions).
+`lisp'      holds the Emacs Lisp code for Emacs (almost everything else).
+`leim'      holds the library of Emacs input methods, Lisp code and
+            auxiliary data files required to type international characters
+            which can't be directly produced by your keyboard.
+`lib-src'   holds the source code for some utility programs for use by or
+            with Emacs, like movemail and etags.
+`etc'       holds miscellaneous architecture-independent data files
+            Emacs uses, like the tutorial text and the Zippy, the Pinhead
+            quote database. The contents of the `lisp', `leim', `info',
+            `man', `lispref', and `lispintro' subdirectories are
+            architecture-independent too.
+`info'      holds the Info documentation tree for Emacs.
+`doc/emacs' holds the source code for the Emacs Manual.  If you modify the
+            manual sources, you will need the `makeinfo' program to produce
+            an updated manual. `makeinfo' is part of the GNU Texinfo
+            package; you need version 4.6 or later of Texinfo.
+`doc/lispref'   holds the source code for the Emacs Lisp reference manual.
+`doc/lispintro' holds the source code for the Introduction to Programming
+                in Emacs Lisp manual.
+`msdos'     holds configuration files for compiling Emacs under MS-DOS.
+`nt'        holds various command files and documentation files that pertain
+            to building and running Emacs on Windows 9X/ME/NT/2000/XP.
+`test'      holds tests for various aspects of Emacs's functionality.
+*** emacs display internals info link
+(TODO fix link)
+info:emacs#E.7.2 Window Internals
+*** emacs-purpose github repo page for internals
+https://github.com/bmag/emacs-purpose/wiki/Internals
